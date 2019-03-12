@@ -1,6 +1,8 @@
 #code to make a Shiny leaflet map for Irma Tweets
 #EBG 3/2019
 
+#https://rstudio.github.io/leaflet/shiny.html
+
 #install package to map (leaflet),  save html (htmlwidgets).drawing objects (sp)
 #install.packages(c("shiny", "leaflet", "htmlwidgets", "sp", "tidyverse"))
 
