@@ -21,6 +21,9 @@ Irma_Tweets <- read_csv("~/Irma_Tweets.csv")
 #jitter coordinates for IRMA tweets to avoid overlap (can click on overlapping tweets if zoomed in enough)
 Irma_Tweets[3:4] <- jitterDupCoords(Irma_Tweets[3:4], max = 0.001, min = 0.0001, fix.one = TRUE, which.fix = "first")
 
+#order by image score so higher scores are on top
+Irma_Tweets <- Irma_Tweets[order(Irma_Tweets$imageScore),]
+
 #load Irma tracks
 IrmaTrack <- read_csv("~/IrmaTrack.csv")
 IrmaTrack$datetime <-parse_datetime(IrmaTrack$datetime,"%Y%m%d")
@@ -53,8 +56,8 @@ ui <- bootstrapPage(
                             value = range(Irma_Tweets$userScore), step = 0.1),
                 sliderInput("rangefour", "GIS Score", 0,1,
                             value = range(Irma_Tweets$gisScore), step = 0.1),
-                selectInput("colors", "Color Scheme",
-                            rownames(subset(brewer.pal.info, category %in% c("seq", "div")))),
+                #selectInput("colors", "Color Scheme",
+                            #rownames(subset(brewer.pal.info, category %in% c("seq", "div")))),
                 checkboxInput("legend", "Show legend", TRUE)
   )
 )
@@ -71,9 +74,9 @@ server <- function(input, output, session) {
                 ,]
   })
   
-  # Reactive expression for the slider color, with colors coresponding to image score. 
+  # Reactive expression for the slider color, with colors corresponding to image score. 
   colorpal <- reactive({
-    colorNumeric(input$colors, Irma_Tweets$imageScore)
+    colorNumeric("viridis", Irma_Tweets$imageScore)
   })
   
   output$map <- renderLeaflet({
