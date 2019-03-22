@@ -16,6 +16,17 @@ library(RColorBrewer)
 #import the IRMA tweets (n.b., after the hydration step)
 Irma_Tweets <- read_csv("~/Irma_Tweets.csv")
 
+#load Irma tracks
+IrmaTrack <- read_csv("~/IrmaTrack.csv")
+IrmaTrack$datetime <-parse_datetime(IrmaTrack$datetime,"%Y%m%d")
+#remove the letters
+IrmaTrack$lat <- gsub('.{1}$', '', IrmaTrack$lat)
+IrmaTrack$log <- gsub('.{1}$', '', IrmaTrack$log)
+#as.numeric
+IrmaTrack$lat <- as.numeric(IrmaTrack$lat)
+IrmaTrack$log <- as.numeric(IrmaTrack$log)
+
+
 #URL field for each tweet
 URL  = paste0("'","<a"," href", "=", Irma_Tweets$image_url , " target = '_blank'", ">", "TWEET</a>","'") #create hyperlinks from tweets
 
@@ -64,7 +75,8 @@ server <- function(input, output, session) {
     # Make the leaflet map. Pull the basemap from OSM. 
     leaflet(Irma_Tweets) %>% 
       addProviderTiles(providers$OpenStreetMap) %>%
-      fitBounds(~min(longitude), ~min(latitude), ~max(longitude), ~max(latitude))
+      fitBounds(~min(longitude), ~min(latitude), ~max(longitude), ~max(latitude)) %>% 
+      addPolylines(data = IrmaTrack, lng = ~c(-log), lat = ~lat)
   })
   
   # observer for sliders:
@@ -77,6 +89,12 @@ server <- function(input, output, session) {
         fillColor = ~pal(imageScore), fillOpacity = 0.7,
         popup = ~paste(text, "<img height='200' src = ", image_url, ">")
       )
+  })
+  
+  # observer for track: 
+   observe({
+    proxy <- leafletProxy("map", data = IrmaTrack) %>% 
+    addPolylines(data = IrmaTrack, lng = ~c(-log), lat = ~lat)
   })
   
   #Observer for legend:
