@@ -116,7 +116,7 @@ server <- function(input, output, session) {
     if (input$legend) {
       pal <- colorpal()
       proxy %>% addLegend(position = "bottomright",
-                          pal = pal, values = ~Irma_Tweets$imageScore
+                          pal = pal, values = ~imageScore
       )
     }
   })
