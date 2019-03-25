@@ -12,9 +12,17 @@ library(tidyverse)
 library(mapview)
 library(shiny)
 library(RColorBrewer)
+#add geoR for jitterDupCoords
+library(geoR)
 
 #import the IRMA tweets (n.b., after the hydration step)
 Irma_Tweets <- read_csv("~/Irma_Tweets.csv")
+
+#jitter coordinates for IRMA tweets to avoid overlap (can click on overlapping tweets if zoomed in enough)
+Irma_Tweets[3:4] <- jitterDupCoords(Irma_Tweets[3:4], max = 0.001, min = 0.0001, fix.one = TRUE, which.fix = "first")
+
+#order by image score so higher scores are on top
+Irma_Tweets <- Irma_Tweets[order(Irma_Tweets$imageScore),]
 
 #load Irma tracks
 IrmaTrack <- read_csv("~/IrmaTrack.csv")
@@ -37,7 +45,7 @@ URL  = paste0("'","<a"," href", "=", Irma_Tweets$image_url , " target = '_blank'
 # S3) User Score
 # S4) GIS Score
 ui <- bootstrapPage(
-  tags$style(type = "text/css", "html, body {width:100%;height:100%}"),
+  tags$style(type = "text/css", "html, body {width:100%;height:100%} img {display:block;margin-left:auto;margin-right:auto;width:80%;}"),
   leafletOutput("map", width = "100%", height = "100%"),
   absolutePanel(top = 10, right = 10,
                 sliderInput("range", "Image Score", 0,1,
@@ -48,8 +56,8 @@ ui <- bootstrapPage(
                             value = range(Irma_Tweets$userScore), step = 0.1),
                 sliderInput("rangefour", "GIS Score", 0,1,
                             value = range(Irma_Tweets$gisScore), step = 0.1),
-                selectInput("colors", "Color Scheme",
-                            rownames(subset(brewer.pal.info, category %in% c("seq", "div")))),
+                #selectInput("colors", "Color Scheme",
+                            #rownames(subset(brewer.pal.info, category %in% c("seq", "div")))),
                 checkboxInput("legend", "Show legend", TRUE)
   )
 )
@@ -66,15 +74,15 @@ server <- function(input, output, session) {
                 ,]
   })
   
-  # Reactive expression for the slider color, with colors coresponding to image score. 
+  # Reactive expression for the slider color, with colors corresponding to image score. 
   colorpal <- reactive({
-    colorNumeric(input$colors, Irma_Tweets$imageScore)
+    colorNumeric("viridis", Irma_Tweets$imageScore)
   })
   
   output$map <- renderLeaflet({
-    # Make the leaflet map. Pull the basemap from OSM. 
+    # Make the leaflet map. Pull the basemap. Changed to Stamen TonerLite for simplicity, but I wish it had color :( -JK 
     leaflet(Irma_Tweets) %>% 
-      addProviderTiles(providers$OpenStreetMap) %>%
+      addProviderTiles(providers$Stamen.TonerLite) %>%
       fitBounds(~min(longitude), ~min(latitude), ~max(longitude), ~max(latitude)) %>% 
       addPolylines(data = IrmaTrack, lng = ~c(-log), lat = ~lat)
   })
@@ -84,10 +92,11 @@ server <- function(input, output, session) {
     pal <- colorpal()
     leafletProxy("map", data = filteredData()) %>%
       clearShapes() %>%
-      addCircles(
-        stroke = TRUE, radius = 2000, weight = 1, color = "#777777",
-        fillColor = ~pal(imageScore), fillOpacity = 0.7,
-        popup = ~paste(text, "<img height='200' src = ", image_url, ">")
+      addCircleMarkers(
+        stroke = FALSE, radius = 7, 
+        #weight = 1, color = "#777777",
+        fillColor = ~pal(imageScore), fillOpacity = 0.6,
+        popup = ~paste("<b>Tweet Text: </b>",text, "<br><br><img width ='80%' src = ", image_url, " alt = 'Tweet Image' align = 'middle'>")
       )
   })
   
