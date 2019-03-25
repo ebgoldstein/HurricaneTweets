@@ -90,7 +90,7 @@ server <- function(input, output, session) {
   observe({
     pal <- colorpal()
     leafletProxy("map", data = filteredData()) %>%
-      clearShapes() %>%
+      clearMarkers() %>%
       addCircleMarkers(
         ~longitude, 
         ~latitude, 
