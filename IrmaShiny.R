@@ -12,14 +12,13 @@ library(tidyverse)
 library(mapview)
 library(shiny)
 library(RColorBrewer)
-#add geoR for jitterDupCoords
-library(geoR)
+
 
 #import the IRMA tweets (n.b., after the hydration step)
 Irma_Tweets <- read_csv("~/Irma_Tweets.csv")
 
 #jitter coordinates for IRMA tweets to avoid overlap (can click on overlapping tweets if zoomed in enough)
-Irma_Tweets[3:4] <- jitterDupCoords(Irma_Tweets[3:4], max = 0.001, min = 0.0001, fix.one = TRUE, which.fix = "first")
+Irma_Tweets[3:4] <- jitter(Irma_Tweets[3:4], factor = 0.001)
 
 #order by image score so higher scores are on top
 Irma_Tweets <- Irma_Tweets[order(Irma_Tweets$imageScore),]
@@ -57,7 +56,7 @@ ui <- bootstrapPage(
                 sliderInput("rangefour", "GIS Score", 0,1,
                             value = range(Irma_Tweets$gisScore), step = 0.1),
                 #selectInput("colors", "Color Scheme",
-                            #rownames(subset(brewer.pal.info, category %in% c("seq", "div")))),
+                #rownames(subset(brewer.pal.info, category %in% c("seq", "div")))),
                 checkboxInput("legend", "Show legend", TRUE)
   )
 )
@@ -93,17 +92,19 @@ server <- function(input, output, session) {
     leafletProxy("map", data = filteredData()) %>%
       clearShapes() %>%
       addCircleMarkers(
+        ~longitude, 
+        ~latitude, 
         stroke = FALSE, radius = 7, 
-        #weight = 1, color = "#777777",
-        fillColor = ~pal(imageScore), fillOpacity = 0.6,
+        fillColor = ~pal(imageScore), 
+        fillOpacity = 0.6,
         popup = ~paste("<b>Tweet Text: </b>",text, "<br><br><img width ='80%' src = ", image_url, " alt = 'Tweet Image' align = 'middle'>")
       )
   })
   
   # observer for track: 
-   observe({
+  observe({
     proxy <- leafletProxy("map", data = IrmaTrack) %>% 
-    addPolylines(data = IrmaTrack, lng = ~c(-log), lat = ~lat)
+      addPolylines(data = IrmaTrack, lng = ~c(-log), lat = ~lat)
   })
   
   #Observer for legend:
@@ -123,10 +124,3 @@ server <- function(input, output, session) {
 
 #Make it real:
 shinyApp(ui, server)
-
-
-  
-  
-  
-  
-  
