@@ -99,13 +99,7 @@ server <- function(input, output, session) {
         popup = ~paste("<b>Tweet Text: </b>",text, "<br><br><img width ='80%' src = ", image_url, " alt = 'Tweet Image' align = 'middle'>")
       )
   })
-  
-  # observer for track: 
-  observe({
-    proxy <- leafletProxy("map", data = IrmaTrack) %>% 
-      addPolylines(data = IrmaTrack, lng = ~c(-log), lat = ~lat)
-  })
-  
+    
   #Observer for legend:
   observe({
     proxy <- leafletProxy("map", data = Irma_Tweets)
