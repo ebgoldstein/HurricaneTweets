@@ -41,7 +41,7 @@ IrmaTrack$log <- as.numeric(IrmaTrack$log)
 URL  = paste0("'","<a"," href", "=", Irma_Tweets$image_url , " target = '_blank'", ">", "TWEET</a>","'") #create hyperlinks from tweets
 
 
-pal <-   colorNumeric("viridis", c(0,1))
+pal <-   colorNumeric("YlOrRd", c(0,1))
 
 ########################################
 #build the Shiny UI with 4 sliders, color input, and legend check box: 
