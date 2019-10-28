@@ -1,2 +1,2 @@
-## Set of Scirpts for Working with Geolocated tweets from hurricanes
+## Set of scripts for working with geolocated tweets from hurricanes
 
