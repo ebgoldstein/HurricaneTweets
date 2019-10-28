@@ -1,5 +1,6 @@
 #code to make a Shiny leaflet map for Irma Tweets
-#EBG 3/2019
+#EBG 3/2019 w/ help from EJK
+#EBG 10/2019
 
 #https://rstudio.github.io/leaflet/shiny.html
 
@@ -15,10 +16,10 @@ library(RColorBrewer)
 
 
 #import the IRMA tweets (n.b., after the hydration step)
-Irma_Tweets <- read_csv("~/Irma_Tweets.csv")
+Irma_Tweets <- read_csv("DATA/Irma_Tweets_Coast.csv")
 
 #jitter coordinates for IRMA tweets to avoid overlap (can click on overlapping tweets if zoomed in enough)
-Irma_Tweets[3:4] <- jitter(Irma_Tweets[3:4], factor = 0.001)
+#Irma_Tweets[3:4] <- jitter(Irma_Tweets[3:4], factor = 0.001)
 
 #scale text scores from 0 to 1
 Irma_Tweets$textScore <- (Irma_Tweets$textScore- min(Irma_Tweets$textScore))/(max(Irma_Tweets$textScore)-min(Irma_Tweets$textScore))
@@ -27,7 +28,7 @@ Irma_Tweets$textScore <- (Irma_Tweets$textScore- min(Irma_Tweets$textScore))/(ma
 Irma_Tweets <- Irma_Tweets[order(Irma_Tweets$imageScore),]
 
 #load Irma tracks
-IrmaTrack <- read_csv("~/IrmaTrack.csv")
+IrmaTrack <- read_csv("DATA/IrmaTrack.csv")
 IrmaTrack$datetime <-parse_datetime(IrmaTrack$datetime,"%Y%m%d")
 #remove the letters
 IrmaTrack$lat <- gsub('.{1}$', '', IrmaTrack$lat)
@@ -48,7 +49,7 @@ pal <-   colorNumeric("YlOrRd", c(0,1))
 # S1) Image Score
 # S2) Text Score
 # S3) User Score
-# S4) GIS Score
+# S4) Distance to Coastline
 ui <- bootstrapPage(
   tags$style(type = "text/css", "html, body {width:100%;height:100%} img {display:block;margin-left:auto;margin-right:auto;width:80%;}"),
   leafletOutput("map", width = "100%", height = "100%"),
@@ -59,8 +60,8 @@ ui <- bootstrapPage(
                             value = range(Irma_Tweets$textScore), step = 0.1),
                 sliderInput("rangethree", "User Score", 0,1,
                             value = range(Irma_Tweets$userScore), step = 0.1),
-                sliderInput("rangefour", "GIS Score", 0,1,
-                            value = range(Irma_Tweets$gisScore), step = 0.1),
+                sliderInput("rangefour", "Distance to Coastline", 0,100000,
+                            value = range(Irma_Tweets$distance), step = 100),
                 checkboxInput("legend", "Show legend", TRUE)
   )
 )
@@ -73,7 +74,7 @@ server <- function(input, output, session) {
     Irma_Tweets[Irma_Tweets$imageScore >= input$range[1] & Irma_Tweets$imageScore <= input$range[2] &
                   Irma_Tweets$textScore >= input$rangetwo[1] & Irma_Tweets$textScore <= input$rangetwo[2] & 
                   Irma_Tweets$userScore >= input$rangethree[1] & Irma_Tweets$userScore <= input$rangethree[2] & 
-                  Irma_Tweets$gisScore >= input$rangefour[1] & Irma_Tweets$gisScore <= input$rangefour[2]
+                  Irma_Tweets$distance >= input$rangefour[1] & Irma_Tweets$distance <= input$rangefour[2]
                 ,]
   })
   
@@ -99,7 +100,7 @@ server <- function(input, output, session) {
         popup = ~paste("<b>Tweet Text: </b>",text, "<br><br><img width ='80%' src = ", image_url, " alt = 'Tweet Image' align = 'middle'>")
       )
   })
-    
+  
   #Observer for legend:
   observe({
     proxy <- leafletProxy("map", data = Irma_Tweets)
@@ -117,4 +118,5 @@ server <- function(input, output, session) {
 
 #Make it real:
 shinyApp(ui, server)
+
 
