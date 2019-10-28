@@ -1,1 +1,2 @@
-## Developing an interactive map from Tweets during Hurricane Irma
+## Set of Scirpts for Working with Geolocated tweets from hurricanes
+
